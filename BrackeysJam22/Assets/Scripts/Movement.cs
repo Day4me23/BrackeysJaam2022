@@ -4,51 +4,50 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-    private float horizontal;
-    private float speed = 8f;
-    private float jumpingPower = 16f;
-    private bool isFacingRight = true;
+    [SerializeField] private LayerMask layerMask;
+    private Rigidbody2D rigidbody2d;
+    private BoxCollider2D boxCollider2d;
+    private SpriteRenderer sr;
+    public float jumpVelocity = 40f;
+    public float moveSpeed = 10f;
 
-    [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private Transform groundCheck;
-    [SerializeField] private LayerMask groundLayer;
+    private void Awake()
+    {
+        rigidbody2d = transform.GetComponent<Rigidbody2D>();
+        boxCollider2d = transform.GetComponent<BoxCollider2D>();
+        sr = GetComponent<SpriteRenderer>();
+    }
+
 
     // Update is called once per frame
     void Update()
     {
-        horizontal = Input.GetAxisRaw("Horizontal");
-
-        if(Input.GetButtonDown("Jump") && IsGrounded())
+        if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
+            rigidbody2d.velocity = Vector2.up * jumpVelocity;
         }
 
-        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
-        {
-            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.2f);
-        }
-;
-        Flip();
-    }
-
-    private void FixedUpdate()
-    {
-        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
+        HandleMovement();
     }
 
     private bool IsGrounded()
     {
-        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+        RaycastHit2D raycastHit2d = Physics2D.BoxCast(boxCollider2d.bounds.center, boxCollider2d.bounds.size, 0f, Vector2.down, .1f, layerMask);
+        Debug.Log(raycastHit2d.collider);
+        return raycastHit2d.collider != null;
     }
 
-    private void Flip()
-    {
-        if(isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f)
-        {
-            isFacingRight = !isFacingRight;
-            Vector3 localScale = transform.localScale;
-            localScale.x *= -1f;
-            transform.localScale = localScale;
+    private void HandleMovement() {
+        if (Input.GetKey(KeyCode.LeftArrow)) {
+            rigidbody2d.velocity = new Vector2(-moveSpeed, rigidbody2d.velocity.y);
+            sr.flipX = false;
+        } else {
+            if (Input.GetKey(KeyCode.RightArrow)) {
+                rigidbody2d.velocity = new Vector2(+moveSpeed, rigidbody2d.velocity.y);
+                sr.flipX = true;
+            } else {
+                rigidbody2d.velocity = new Vector2(0, rigidbody2d.velocity.y);
+            }
         }
     }
 }
